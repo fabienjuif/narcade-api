@@ -1,42 +1,55 @@
 require('sugar')
 
+/** Requires. */
 const app = require('express')()
 const http = require('http').Server(app)
 const io = require('socket.io')(http)
 const bodyParser = require('body-parser')
+const request = require('request')
 
+/** App configuration. */
 app.use(bodyParser.json())
 
+/** Express routes. */
 app.post('/actions', (req, res) => {
     io.emit('action', req.body)
-
-    console.log('emit action : ' + JSON.stringify(req.body))
-
     res.end()
 })
 
-io.on('connection', function(socket) {
-    const actions = [{
-        action: 'destroy',
-        user: '@julien'
-    }, {
-        action: 'up',
-        user: '@guillaume'
-    }, {
-        action: 'down',
-        user: '@antoine'
-    }];
+/** Socket.IO events. */
+io.on('connection', (socket) => {
+    socket.on('blame', (data) => {
+      var message = data.slackName + " est mort sur NArcade.. C'te honte..."
 
-    (() => {
-        io.emit('action', actions[Number.random(actions.length - 1)])
-    }).every(2000)
+      request.post('http://localhost:3000/messages', {
+              json: true,
+              body: {user: data.user, score: data.score, text: message}
+          },
+          (error, response, body) => {
+              if (error) {
+                socket.error('error', error)
+              }
+          })
+    })
 
-    socket.on('score', function(msg) {
-        console.log('move')
-        console.log(JSON.stringify(msg))
+    socket.on('score', (data) => {
+      // FIXME : Laisser le bot interpreter le message et passer par la stack hears
+      var message = data.slackName + ' a fini sa partie de NArcade, il a fini avec un score de ' + data.score + ' !'
+
+      request.post('http://localhost:3000/messages', {
+              json: true,
+              body: {user: data.user, score: data.score, text: message}
+          },
+          (error, response, body) => {
+              if (error) {
+                socket.error('error', error)
+              }
+          })
     })
 })
 
-http.listen(4000, function() {
-    console.log('listening on *:4000')
+/** Everything is ready, the server can listen. */
+const port = 4000
+http.listen(port, () => {
+    console.log('listening on *:' + port)
 })
