@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const request = require('request')
 
 /** App configuration. */
+const BOT_URL = process.env.BOT_URL || "http://bot:3000/"
 app.use(bodyParser.json())
 
 /** Express routes. */
@@ -21,7 +22,7 @@ io.on('connection', (socket) => {
     socket.on('blame', (data) => {
       var message = data.slackName + " est mort sur NArcade.. C'te honte..."
 
-      request.post('http://localhost:3000/messages', {
+      request.post(BOT_URL + 'messages', {
               json: true,
               body: {user: data.user, score: data.score, text: message}
           },
@@ -36,7 +37,7 @@ io.on('connection', (socket) => {
       // FIXME : Laisser le bot interpreter le message et passer par la stack hears
       var message = data.slackName + ' a fini sa partie de NArcade, il a fini avec un score de ' + data.score + ' !'
 
-      request.post('http://localhost:3000/messages', {
+      request.post(BOT_URL + 'messages', {
               json: true,
               body: {user: data.user, score: data.score, text: message}
           },

@@ -1,0 +1,6 @@
+narcade-api:
+  build: .
+  environment:
+    - BOT_URL=http://localhost:3000
+  ports:
+    - "4000:4000"
